@@ -98,9 +98,36 @@ outShowRowLoop:
 # ----------------------------------------
 
 rgb888_to_rgb565:
-# ----------------------------------------
-# Write your code here.
-# You may move the "return" instruction (jalr zero, ra, 0).
+    add  t0, zero, zero       # row counter, initialized as zero
+rowLoop:
+    bge  t0, a2, outRowLoop	  # exit loop when row counter is bigger than a2
+    add  t1, zero, zero 	  # column counter, initialized as zero
+columnLoop:
+    bge  t1, a1, outColumnLoop	 # exit loop when column counter is bigger than a1
+    lbu  t2, 0(a0)   # load red to register t2 and fill zeroes into the MSB
+    lbu  t3, 1(a0)   # load green to register t3 and fill zeroes into the MSB
+    lbu  t4, 2(a0)   # load blue to register t4 and fill zeroes into the MSB
+
+    andi t2, t2, 0xf8   # clear the 3 LSBs (given 248 value)
+    slli t2, t2, 8      # shift to final place of R in RGB565 format
+	
+    andi t3, t3, 0xfc   # clear the 2 LSBs (given 252 value)
+    slli t3, t3, 3      # shift to final place of G in RGB565 format
+	
+    srli t4, t4, 3      # shifts right 3 bits (LSBs) of B (keeps the 5 MSBs for the RGB565 format)
+	
+    or   t2, t2, t3    # Combine R and G
+    or   t2, t2, t4    # Combine RG and B
+	
+    sh   t2, 0(a3)     # store 16bits (half word) in RGB565 format to output
+    addi a0, a0, 3     # move input pointer to next pixel
+    addi a3, a3, 2     # move output pointer to next pixel
+    addi t1, t1, 1	   # increase column counter by 1
+    j    columnLoop
+outColumnLoop:
+    addi t0, t0, 1 	   # increase row counter by 1
+    j    rowLoop
+outRowLoop:
     jalr zero, ra, 0
 
 
